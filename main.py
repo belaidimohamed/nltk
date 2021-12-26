@@ -13,7 +13,6 @@ from statistics import mode
 from nltk.tokenize import word_tokenize
 
 import os
-# os.chdir("/home/mohamed/Desktop/nltk")
 class VoteClassifier(ClassifierI):
     def __init__(self, *classifiers):
         self._classifiers = classifiers
