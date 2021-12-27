@@ -1,123 +1,66 @@
-import random
-from nltk.corpus import movie_reviews
-from nltk.classify.scikitlearn import SklearnClassifier
-import pickle
-import nltk
-from sklearn.naive_bayes import MultinomialNB, BernoulliNB
-from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.svm import SVC, LinearSVC, NuSVC
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui  import  QIcon , QFont 
+import sys
+import sentiment as s 
 
-from nltk.classify import ClassifierI
-from statistics import mode
+class one(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('finder')
+        self.setWindowIcon(QIcon('detective1.png'))# put here window icon (full path)
+        self.setGeometry(350,100,500,240)
+        self.initwindow()
+        self.show()
+    def initwindow(self):
+        self.vbox=QVBoxLayout()
+        self.hbox=QHBoxLayout()
+        self.hbox_2=QHBoxLayout()
+        self.vbox.setContentsMargins(30,30,30,10)
 
-from nltk.tokenize import word_tokenize
+        #---------------------------------
+        label=QLabel('Enter a phrase to analyse : ')
+        label.setFont(QFont('bold',11))
 
-import os
-# os.chdir("/home/mohamed/Desktop/nltk")
-class VoteClassifier(ClassifierI):
-    def __init__(self, *classifiers):
-        self._classifiers = classifiers
+        self.line=QLineEdit()
+  
 
-    def classify(self, features):
-        votes = []
-        for c in self._classifiers:
-            v = c.classify(features)
-            votes.append(v)
-        return mode(votes)
+        self.hbox.addWidget(self.line)
+        self.hbox.setContentsMargins(10,0,30,30)
 
-    def confidence(self, features):
-        votes = []
-        for c in self._classifiers:
-            v = c.classify(features)
-            votes.append(v)
+        button=QPushButton('Analyse')
+        button.setStyleSheet('background-color:green;max-width:140px;height:25px;text-align:center;margin-left:150px;margin-bottom:10px')
+        button.clicked.connect(self.b1)
+        
+        self.label2=QLabel('')
+        self.label2.setStyleSheet('color: green')
+        self.label2.setFont(QFont('ink free',12))
 
-        choice_votes = votes.count(mode(votes))
-        conf = choice_votes / len(votes)
-        return conf
+        self.label3=QLabel('')
+        self.label3.setStyleSheet('color: green')
+        self.label3.setFont(QFont('ink free',12))
 
-short_pos = open("data/positive.txt","r",encoding = "ISO-8859-1").read()
-short_neg = open("data/negative.txt","r",encoding = "ISO-8859-1").read()
+        self.vbox.addWidget(label)
+        self.vbox.addLayout(self.hbox)
+        self.vbox.addWidget(button)
+        self.vbox.addWidget(self.label2)
+        self.vbox.addWidget(self.label3)
 
-documents = []
+        self.setLayout(self.vbox)
 
-for r in short_pos.split('\n'):
-    documents.append( (r, "pos") )
+    def b1(self):
+        ch = s.sentiment(self.line.text())
+        if(ch[0]=="neg"):
+          self.label2.setText("Type of text: "+"negtive")
+          self.label3.setText('Level of confidance: '+str(ch[1]*100) + "%")
+          self.label3.setStyleSheet('color: red')
+          self.label2.setStyleSheet('color: red')
+        else :
+          self.label2.setText("Type of text: "+"positive")
+          self.label3.setText('Level of confidance: '+str(ch[1]*100) + "%")
+          self.label3.setStyleSheet('color: green')
+          self.label2.setStyleSheet('color: green')
 
-for r in short_neg.split('\n'):
-    documents.append( (r, "neg") )
+app = QApplication(sys.argv)
 
-
-all_words = []
-
-short_pos_words = word_tokenize(short_pos)
-short_neg_words = word_tokenize(short_neg)
-
-for w in short_pos_words:
-    all_words.append(w.lower())
-
-for w in short_neg_words:
-    all_words.append(w.lower())
-
-all_words = nltk.FreqDist(all_words)
-
-word_features = list(all_words.keys())[:5000]
-
-def find_features(document):
-    words = word_tokenize(document)
-    features = {}
-    for w in word_features:
-        features[w] = (w in words)
-
-    return features
-
-
-featuresets = [(find_features(rev), category) for (rev, category) in documents]
-
-random.shuffle(featuresets)
-
-# positive data example:
-training_set = featuresets[:10000]
-testing_set =  featuresets[10000:]
-
-
-classifier = nltk.NaiveBayesClassifier.train(training_set)
-print("Original Naive Bayes Algo accuracy percent:", (nltk.classify.accuracy(classifier, testing_set))*100)
-classifier.show_most_informative_features(15)
-
-MNB_classifier = SklearnClassifier(MultinomialNB())
-MNB_classifier.train(training_set)
-print("MNB_classifier accuracy percent:", (nltk.classify.accuracy(MNB_classifier, testing_set))*100)
-
-BernoulliNB_classifier = SklearnClassifier(BernoulliNB())
-BernoulliNB_classifier.train(training_set)
-print("BernoulliNB_classifier accuracy percent:", (nltk.classify.accuracy(BernoulliNB_classifier, testing_set))*100)
-
-LogisticRegression_classifier = SklearnClassifier(LogisticRegression())
-LogisticRegression_classifier.train(training_set)
-print("LogisticRegression_classifier accuracy percent:", (nltk.classify.accuracy(LogisticRegression_classifier, testing_set))*100)
-
-SGDClassifier_classifier = SklearnClassifier(SGDClassifier())
-SGDClassifier_classifier.train(training_set)
-print("SGDClassifier_classifier accuracy percent:", (nltk.classify.accuracy(SGDClassifier_classifier, testing_set))*100)
-
-##SVC_classifier = SklearnClassifier(SVC())
-##SVC_classifier.train(training_set)
-##print("SVC_classifier accuracy percent:", (nltk.classify.accuracy(SVC_classifier, testing_set))*100)
-
-LinearSVC_classifier = SklearnClassifier(LinearSVC())
-LinearSVC_classifier.train(training_set)
-print("LinearSVC_classifier accuracy percent:", (nltk.classify.accuracy(LinearSVC_classifier, testing_set))*100)
-
-NuSVC_classifier = SklearnClassifier(NuSVC())
-NuSVC_classifier.train(training_set)
-print("NuSVC_classifier accuracy percent:", (nltk.classify.accuracy(NuSVC_classifier, testing_set))*100)
-
-
-voted_classifier = VoteClassifier(
-                                  NuSVC_classifier,
-                                  LinearSVC_classifier,
-                                  MNB_classifier,
-                                  BernoulliNB_classifier,
-                                  LogisticRegression_classifier)
-
-print("voted_classifier accuracy percent:", (nltk.classify.accuracy(voted_classifier, testing_set))*100)
+win=one()
+sys.exit(app.exec_())
